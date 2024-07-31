@@ -22,17 +22,18 @@ import {
   getBaseTypeNode,
   indent,
   indentMultiline,
+  NormalizedScalarsMap,
   ParsedConfig,
   transformComment,
 } from '@graphql-codegen/visitor-plugin-common';
 import { KotlinResolversPluginRawConfig } from './config.js';
 
-export const KOTLIN_SCALARS = {
-  ID: 'Any',
-  String: 'String',
-  Boolean: 'Boolean',
-  Int: 'Int',
-  Float: 'Float',
+export const KOTLIN_SCALARS: NormalizedScalarsMap = {
+  ID: { input: 'Any', output: 'Any' },
+  String: { input: 'String', output: 'String' },
+  Boolean: { input: 'Boolean', output: 'Boolean' },
+  Int: { input: 'Int', output: 'Int' },
+  Float: { input: 'Float', output: 'Float' },
 };
 
 export interface KotlinResolverParsedConfig extends ParsedConfig {
@@ -143,8 +144,8 @@ ${enumValues}
     if (isScalarType(schemaType)) {
       if (this.config.scalars[schemaType.name]) {
         result = {
-          baseType: this.scalars[schemaType.name],
-          typeName: this.scalars[schemaType.name],
+          baseType: this.scalars[schemaType.name].input,
+          typeName: this.scalars[schemaType.name].input,
           isScalar: true,
           isArray,
           nullable,
@@ -238,17 +239,18 @@ ${enumValues}
 
     // language=kotlin
     return `${typeAnnotations}data class ${name}(
-${classMembers}
-) {
-  ${suppress}constructor(args: Map<String, Any>) : this(
-${ctorSet}
-  )
-}`;
+            ${classMembers}
+        ) {
+            ${suppress}constructor(args: Map<String, Any>) : this(
+            ${ctorSet}
+            )
+        }`;
   }
 
   private buildTypeAnnotations() {
     return this.config.serializable ? indent('@kotlinx.serialization.Serializable ', 0) : '';
   }
+
   private buildEnumAnnotation(label: string) {
     return this.config.serializable
       ? indent(`@kotlinx.serialization.SerialName("${label}") `, 0)
@@ -275,8 +277,8 @@ ${ctorSet}
     const typeAnnotations = this.buildTypeAnnotations();
     // language=kotlin
     return `${typeAnnotations}data class ${name}(
-${classMembers}
-)`;
+            ${classMembers}
+        )`;
   }
 
   protected initialValue(typeName: string, defaultValue?: ValueNode): string | undefined {
